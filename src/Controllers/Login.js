@@ -10,14 +10,28 @@ class Login {
     res.redirect('/login');
   }
 
-  encryptData(secretText) {
-    const crypto = require('crypto');
+encryptData(secretText) {
+    // Validate input to ensure it's a non-empty string
+    if (!secretText || typeof secretText !== 'string') {
+        throw new Error('Invalid input: secretText must be a non-empty string.');
+    }
 
-    // Weak encryption
-    const desCipher = crypto.createCipheriv(
-      'des',
-      "This is a simple password, don't guess it"
-    );
+    // Securely generate a random passphrase using a secure random number generator
+    const secureRandomGenerator = crypto.randomBytes;
+    const passphrase = secureRandomGenerator(32).toString('hex'); // Generate a 32-byte hexadecimal string
+
+    // Use AES for encryption instead of DES
+    const cipher = crypto.createCipheriv('aes-256-cbc', Buffer.from(passphrase, 'hex'), Buffer.alloc(16));
+
+    // Encrypt the data
+    let encrypted = cipher.update(secretText, 'utf8');
+    encrypted = Buffer.concat([encrypted, cipher.final()]);
+
+    // Sanitize the encrypted data before returning
+    const sanitizedEncryptedData = sanitizeHtml(encrypted.toString());
+    return sanitizedEncryptedData;
+}
+
     return desCipher.write(secretText, 'utf8', 'hex'); // BAD: weak encryption
   }
 
